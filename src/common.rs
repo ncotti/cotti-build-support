@@ -1,5 +1,9 @@
-use std::{fs, io::{self, ErrorKind}, path::{Path, PathBuf}};
 use glob;
+use std::{
+    fs,
+    io::{self, ErrorKind},
+    path::{Path, PathBuf},
+};
 
 /// Mimics the "rm -rf" from Unix, i.e., delete the given path, either a file
 /// or a folder, recursively, and don't fail if the path doesn't exist.
@@ -7,7 +11,10 @@ pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
     let path = path.as_ref();
 
     if path.to_string_lossy().contains(['*', '?', '[']) {
-        let e = std::io::Error::new(ErrorKind::InvalidFilename, format!("Path to be removed should not be a glob: {:?}", path));
+        let e = std::io::Error::new(
+            ErrorKind::InvalidFilename,
+            format!("Path to be removed should not be a glob: {:?}", path),
+        );
         return Err(e);
     }
 
@@ -56,9 +63,9 @@ pub fn find_dirs(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-use tempfile::{NamedTempFile, tempdir, tempdir_in};
+    use tempfile::{NamedTempFile, tempdir, tempdir_in};
 
-use super::*;
+    use super::*;
 
     mod rm {
         use super::*;
@@ -68,7 +75,7 @@ use super::*;
             let path = Path::new(file.path());
             assert!(path.exists());
             rm_rf(&file).expect("Ok");
-            assert!(! path.exists());
+            assert!(!path.exists());
         }
 
         #[test]
@@ -77,7 +84,7 @@ use super::*;
             let path = Path::new(dir.path());
             assert!(path.exists());
             rm_rf(&dir).expect("Ok");
-            assert!( ! path.exists());
+            assert!(!path.exists());
         }
 
         #[test]
@@ -90,8 +97,8 @@ use super::*;
             assert!(path1.exists());
             assert!(path2.exists());
             rm_rf(&dir1).expect("Ok");
-            assert!(! path1.exists());
-            assert!(! path2.exists());
+            assert!(!path1.exists());
+            assert!(!path2.exists());
         }
 
         #[test]
@@ -120,8 +127,8 @@ use super::*;
     }
 
     mod find {
-        use std::iter::zip;
         use super::*;
+        use std::iter::zip;
 
         #[test]
         fn find_specific_file() {
@@ -158,7 +165,8 @@ use super::*;
             let mut expected_json_files: Vec<&PathBuf> = vec![&files[3], &files[4]];
             expected_json_files.sort();
 
-            let mut expected_prefixed_files:Vec<&PathBuf> = vec![&files[0], &files[1], &files[2], &files[3]];
+            let mut expected_prefixed_files: Vec<&PathBuf> =
+                vec![&files[0], &files[1], &files[2], &files[3]];
             expected_prefixed_files.sort();
 
             for file in &files {
@@ -189,7 +197,6 @@ use super::*;
             for (exp, actual) in zip(expected_prefixed_files, found_files) {
                 assert!(*exp == actual);
             }
-
         }
 
         #[test]

@@ -1,7 +1,7 @@
+use std::fs;
 use std::io;
 use std::io::ErrorKind;
 use std::path::Path;
-use std::fs;
 
 use crate::common;
 
@@ -24,7 +24,10 @@ pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Resu
     };
 
     if src_files.is_empty() {
-        let e = std::io::Error::new(ErrorKind::InvalidFilename, format!("No source files to be installed at: {:?}", src_dir));
+        let e = std::io::Error::new(
+            ErrorKind::InvalidFilename,
+            format!("No source files to be installed at: {:?}", src_dir),
+        );
         return Err(e);
     }
 
@@ -39,18 +42,17 @@ pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Resu
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
 
-use super::*;
-use crate::common;
-use std::path::PathBuf;
+    use super::*;
+    use crate::common;
+    use std::path::PathBuf;
 
     mod install {
         use tempfile::{NamedTempFile, tempdir, tempdir_in};
 
-use super::*;
+        use super::*;
 
         #[test]
         fn src_dir_not_exist() {
@@ -78,12 +80,22 @@ use super::*;
 
             for file in &src_files {
                 assert!(file.path().exists());
-                assert!(! dst_dir.path().join(file.path().file_name().unwrap()).exists());
+                assert!(
+                    !dst_dir
+                        .path()
+                        .join(file.path().file_name().unwrap())
+                        .exists()
+                );
             }
             install(&src_dir, &dst_dir).expect("Ok");
             for file in &src_files {
                 assert!(file.path().exists());
-                assert!(dst_dir.path().join(file.path().file_name().unwrap()).exists());
+                assert!(
+                    dst_dir
+                        .path()
+                        .join(file.path().file_name().unwrap())
+                        .exists()
+                );
             }
         }
 
@@ -109,16 +121,13 @@ use super::*;
 
             for file in &src_files_json {
                 assert!(file.exists());
-                assert!(! dst_dir.path().join(file.file_name().unwrap()).exists());
+                assert!(!dst_dir.path().join(file.file_name().unwrap()).exists());
             }
 
             assert!(common::find(dst_dir.path().join("**/*")).is_empty());
             install(src_dir.path().join("**/*.txt"), &dst_dir).expect("Ok");
             assert!(common::find(dst_dir.path().join("**/*.json")).is_empty());
             assert!(common::find(dst_dir.path().join("**/*.txt")).len() == src_files_txt.len());
-
-
         }
     }
-
 }
