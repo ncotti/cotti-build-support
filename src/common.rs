@@ -5,8 +5,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Mimics the "rm -rf" from Unix, i.e., delete the given path, either a file
-/// or a folder, recursively, and don't fail if the path doesn't exist.
+/// Mimics the "rm -rf" command from GNU.
+///
+/// Deletes the given path, either a file or a folder, recursively, and
+/// doesn't fail if the path doesn't exist.
+///
+/// It does not support glob expansion, so it will return with an error if an
+/// asterisk is part of the input path.
 pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
     let path = path.as_ref();
 
@@ -31,8 +36,9 @@ pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
     }
 }
 
-/// Returns the list of files and folders that match the given "pattern",
-/// with glob expansion. If no file is found, an empty vector is returned.
+/// Returns the list of files and folders that match the given "pattern".
+///
+/// It supports glob expansion. If no file is found, an empty vector is returned.
 pub fn find(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
     let pattern = pattern.as_ref().to_string_lossy();
 
@@ -43,8 +49,9 @@ pub fn find(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Returns the list of files, not folders, that match the given "pattern",
-/// with glob expansion. If no file is found, an empty vector is returned.
+/// Returns the list of files, not folders, that match the given "pattern".
+///
+/// It supports glob expansion. If no file is found, an empty vector is returned.
 pub fn find_files(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
     find(pattern)
         .into_iter()
@@ -52,8 +59,9 @@ pub fn find_files(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Returns the list of folders, not files that match the given "pattern",
-/// with glob expansion. If no folder is found, an empty vector is returned.
+/// Returns the list of folders, not files, that match the given "pattern",
+///
+/// It supports glob expansion. If no file is found, an empty vector is returned.
 pub fn find_dirs(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
     find(pattern)
         .into_iter()
