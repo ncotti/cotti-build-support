@@ -2,9 +2,14 @@ use std::{fs, io::{self, ErrorKind}, path::{Path, PathBuf}};
 use glob;
 
 /// Mimics the "rm -rf" from Unix, i.e., delete the given path, either a file
-/// or a folder, recursively and don't fail if the path doesn't exist.
+/// or a folder, recursively, and don't fail if the path doesn't exist.
 pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
     let path = path.as_ref();
+
+    if path.to_string_lossy().contains(['*', '?', '[']) {
+        let e = std::io::Error::new(ErrorKind::InvalidFilename, format!("Path to be removed should not be a glob: {:?}", path));
+        return Err(e);
+    }
 
     match fs::symlink_metadata(path) {
         Ok(meta) => {
@@ -19,10 +24,10 @@ pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
     }
 }
 
-/// Returns the list of files and folders that match the given "file",
+/// Returns the list of files and folders that match the given "pattern",
 /// with glob expansion. If no file is found, an empty vector is returned.
-pub fn find(file: impl AsRef<Path>) -> Vec<PathBuf> {
-    let pattern = file.as_ref().to_string_lossy();
+pub fn find(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
+    let pattern = pattern.as_ref().to_string_lossy();
 
     glob::glob(&pattern)
         .into_iter()
@@ -31,35 +36,22 @@ pub fn find(file: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Returns the list of files, not folders, that match the given "file",
+/// Returns the list of files, not folders, that match the given "pattern",
 /// with glob expansion. If no file is found, an empty vector is returned.
-pub fn find_files(file: impl AsRef<Path>) -> Vec<PathBuf> {
-    find(file)
+pub fn find_files(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
+    find(pattern)
         .into_iter()
         .filter(|file| file.is_file())
         .collect()
 }
 
-/// Returns the list of folders, not files that match the given "file",
+/// Returns the list of folders, not files that match the given "pattern",
 /// with glob expansion. If no folder is found, an empty vector is returned.
-pub fn find_dirs(file: impl AsRef<Path>) -> Vec<PathBuf> {
-    find(file)
+pub fn find_dirs(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
+    find(pattern)
         .into_iter()
         .filter(|file| file.is_dir())
         .collect()
-}
-
-/// Forcefully creates a file and all the parent directories required to
-/// reach that file. If the file already exists, it is truncated.
-pub fn create_file(file: impl AsRef<Path>) -> io::Result<()> {
-    let file = file.as_ref();
-
-    if let Some(parent) = file.parent().filter(|p| !p.as_os_str().is_empty()) {
-        fs::create_dir_all(parent)?;
-    }
-
-    fs::File::create(file)?;
-    Ok(())
 }
 
 #[cfg(test)]
@@ -118,6 +110,12 @@ use super::*;
             let path = Path::new("/root");
             assert!(path.exists());
             rm_rf(path).expect_err("OS error for lack of permissions");
+        }
+
+        #[test]
+        fn do_not_remove_globs() {
+            let path = Path::new("/tmp/*");
+            rm_rf(path).expect_err("Not globs");
         }
     }
 
@@ -241,9 +239,14 @@ use super::*;
             fs::File::create(parent_dir2.path().join("file2.txt")).expect("Ok");
             fs::File::create(parent_dir3.path().join("file3.txt")).expect("Ok");
 
+            // file1.txt, file2.txt, file3.txt
             let found_files = find(parent_dir1.path().join("**/*.txt"));
-            println!("{:?}", found_files);
             assert!(found_files.len() == 3);
+
+            // 3 text files, plus 2 folders
+            let found_files = find(parent_dir1.path().join("**/*"));
+            println!("{:?}", found_files);
+            assert!(found_files.len() == 5);
         }
     }
 }

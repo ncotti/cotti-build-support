@@ -1,11 +1,13 @@
+#![warn(missing_docs)]
+
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use flate2::read::GzDecoder;
 use tar::Archive;
 use std::fs;
 
-mod install;
-mod common;
+pub mod install;
+pub mod common;
 
 
 
