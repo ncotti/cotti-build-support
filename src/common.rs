@@ -36,6 +36,7 @@ pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
     }
 }
 
+/// Mimics the "find -wholename <pattern>" command from GNU.
 /// Returns the list of files and folders that match the given "pattern".
 ///
 /// It supports glob expansion. If no file is found, an empty vector is returned.
@@ -49,6 +50,7 @@ pub fn find(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
+/// Mimics the "find -type f -wholename <pattern>" command from GNU.
 /// Returns the list of files, not folders, that match the given "pattern".
 ///
 /// It supports glob expansion. If no file is found, an empty vector is returned.
@@ -58,7 +60,7 @@ pub fn find_files(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
         .filter(|file| file.is_file())
         .collect()
 }
-
+/// Mimics the "find -type d -wholename <pattern>" command from GNU.
 /// Returns the list of folders, not files, that match the given "pattern",
 ///
 /// It supports glob expansion. If no file is found, an empty vector is returned.

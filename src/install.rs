@@ -1,26 +1,35 @@
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::common;
 
-/// Copies all files from "src_dir" to "dst_dir"
-/// If "dst_dir" already exists, all its contents will be erased.
-/// If "src_dir" doesn't exist or is an empty folder, an error will be returned.
-/// If "src_dir" is a directory, all its contents recursevely will be copied.
-/// If "src_dir" is a glob pattern, only the files that match that pattern will
-/// be copied. If none match, an error will be issued.
+/// Mimics the "install <src> <dst>" command from GNU. Copies all files from
+/// "src_dir" to "dst_dir", but preserves the "src_dir" folder structure
+///
+/// src_dir follows these conditions:
+/// * If it is a directory, all its contents and from its sub-directories
+/// will be copied.
+/// * If it doesn't exist or is empty, an error will be returned.
+/// * It supports glob expansion of files. In that case, only the files that
+/// match the glob will be copied.
+///
+/// dst_dir follows these conditions:
+/// * If it doesn't exists, the path will be created.
+/// * If it already exists, erases all its previous contents.
 pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Result<()> {
     let src_dir = src_dir.as_ref();
     let dst_dir = dst_dir.as_ref();
 
-    let src_files = if src_dir.to_string_lossy().contains(['*', '?', '[']) {
-        // If src_dir is a glob, find all files as-is
+    let src_files: Vec<PathBuf> = if src_dir.to_string_lossy().contains(['*', '?', '[']) {
         common::find(src_dir)
-    } else {
-        // If it is not a glob, find all files
+    } else if src_dir.is_file() {
+        vec![PathBuf::from(src_dir)]
+    } else if src_dir.is_dir() {
         common::find(src_dir.join("**/*"))
+    } else {
+        Vec::new()
     };
 
     if src_files.is_empty() {
@@ -47,7 +56,6 @@ mod tests {
 
     use super::*;
     use crate::common;
-    use std::path::PathBuf;
 
     mod install {
         use tempfile::{NamedTempFile, tempdir, tempdir_in};
