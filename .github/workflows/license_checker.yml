@@ -5,10 +5,9 @@ description: <
 on: push
 
 jobs:
-  license_check:
+  license_checker:
     runs-on: ubuntu-latest
     env:
-      # Modify to match your repo requirements
       REPO_PATH: .
       LICENSE: "MIT"
       COPYRIGHT: "Copyright (c) 2026 Nicolas Gabriel Cotti"

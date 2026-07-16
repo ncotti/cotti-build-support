@@ -1,0 +1,21 @@
+name: "Markdown linter"
+description: <
+  Calls the markdown linter for the README
+
+on: push
+
+jobs:
+  markdown_linter:
+    runs-on: ubuntu-latest
+    env:
+      REPO_PATH: .
+    steps:
+      - name: "Checkout project repo"
+        uses: actions/checkout@v5
+        with:
+          path: ${{ env.REPO_PATH }}
+
+      - name: "Call Markdown linter"
+        uses: ncotti/cotti-ci/actions/markdown_linter@main
+        with:
+          target_dir: ${{ env.REPO_PATH }}
