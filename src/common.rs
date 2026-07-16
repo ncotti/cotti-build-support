@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! # Common
 //!
 //! Functions that mimic the implementation of well-known Bash commands.
