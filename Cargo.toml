@@ -1,7 +1,9 @@
 [package]
 name = "cotti-build-support"
+license = "MIT"
 version = "0.1.0"
 edition = "2024"
+description = "Filesystem and OS management for installing and building dependencies."
 
 [dependencies]
 tar = "0.4.46"
