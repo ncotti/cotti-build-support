@@ -1,5 +1,8 @@
 #![warn(missing_docs)]
 
+//! TODO crate documentation
+//! 
+
 use flate2::read::GzDecoder;
 use std::fs;
 use std::io::ErrorKind;
@@ -9,16 +12,6 @@ use tar::Archive;
 pub mod common;
 pub mod install;
 
-/// Decompresses the given tar file into the output_dir.
-/// The tar file may have any of the following extensions:
-/// * .tar
-pub fn untar(tar: &str, output_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let file = fs::File::open(tar)?;
-    let decoder = GzDecoder::new(file);
-    let mut archive = Archive::new(decoder);
-    archive.unpack(output_dir)?;
-    Ok(())
-}
 
 pub fn install_ftd2xx(
     tar: &str,

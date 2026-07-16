@@ -2,6 +2,11 @@ use std::fs;
 use std::io;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
+use flate2::read::GzDecoder;
+use bzip2::read::BzDecoder;
+use xz2::read::XzDecoder;
+use tar::Archive;
+use zstd;
 
 use crate::common;
 
@@ -51,15 +56,127 @@ pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Resu
     Ok(())
 }
 
+/// Mimics the "tar -xf" command from GNU. Decompresses the given tar file
+/// into the output_dir.
+///
+/// The tar file may have any of the following extensions, from which the
+/// function will infer the decompression algorithm:
+/// * `.tar`
+/// * `.tar.bz2 | .tbz2 | .tbz`
+/// * `.tar.xz | .txz`
+/// * `.tar.lzma`
+/// * `.tar.gz | .tgz`
+/// * `.tar.zst | .tzst`
+pub fn untar(tar: impl AsRef<Path>, output_dir: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
+    let tar = tar.as_ref();
+    let file = fs::File::open(tar)?;
+
+    match tar.extension().and_then(|e| e.to_str()) {
+        Some("tar") => {
+            let mut archive = Archive::new(file);
+            archive.unpack(output_dir)?;
+        },
+        Some("bz2") | Some("tbz2") | Some("tbz") => {
+            let decoder = BzDecoder::new(file);
+            let mut archive = Archive::new(decoder);
+            archive.unpack(output_dir)?;
+        },
+        Some("xz") | Some("txz") => {
+            let decoder = XzDecoder::new(file);
+            let mut archive = Archive::new(decoder);
+            archive.unpack(output_dir)?;
+        },
+        Some("lzma") => {
+            let decoder = XzDecoder::new(file);
+            let mut archive = Archive::new(decoder);
+            archive.unpack(output_dir)?;
+        },
+        Some("gz") | Some("tgz") => {
+            let decoder = GzDecoder::new(file);
+            let mut archive = Archive::new(decoder);
+            archive.unpack(output_dir)?;
+        },
+        Some("zst") | Some("tzst") => {
+            let decoder = zstd::Decoder::new(file)?;
+            let mut archive = Archive::new(decoder);
+            archive.unpack(output_dir)?;
+        },
+        Some("zip") => {
+            let mut zip = zip::ZipArchive::new(file)?;
+            zip.extract(output_dir)?;
+        },
+        Some(_) | None=> {
+            let e = std::io::Error::new(
+            ErrorKind::InvalidFilename,
+            format!("Unknown tar extension: {:?}", tar));
+            return Err(Box::new(e));
+        },
+    };
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
     use crate::common;
+    use tempfile::{NamedTempFile, tempdir, tempdir_in};
+
+    mod untar {
+        use super::*;
+
+        fn test_untar_generic(tar_file: &str) {
+            let out_dir_parent = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("tests")
+                .join("test_files");
+
+            let out_dir = tempdir_in(&out_dir_parent).unwrap();
+
+            let tar = out_dir_parent.join(tar_file);
+            untar(tar, &out_dir).expect("Ok");
+            assert!(fs::read(out_dir_parent.join("file1.txt")).unwrap() == fs::read(out_dir.path().join("file1.txt")).unwrap());
+            assert!(fs::read(out_dir_parent.join("file2.txt")).unwrap() == fs::read(out_dir.path().join("file2.txt")).unwrap());
+        }
+
+        #[test]
+        fn untar_tar() {
+            test_untar_generic("files.tar");
+        }
+
+        #[test]
+        fn untar_bzip2() {
+            test_untar_generic("files.tar.bz2");
+        }
+
+        #[test]
+        fn untar_gzip() {
+            test_untar_generic("files.tar.gz");
+        }
+
+        #[test]
+        fn untar_lzma() {
+            test_untar_generic("files.tar.lzma");
+        }
+
+
+        #[test]
+        fn untar_xz() {
+            test_untar_generic("files.tar.xz");
+        }
+
+        #[test]
+        fn untar_zst() {
+            test_untar_generic("files.tar.zst");
+        }
+
+        #[test]
+        fn untar_zip() {
+            test_untar_generic("files.zip");
+        }
+    }
 
     mod install {
-        use tempfile::{NamedTempFile, tempdir, tempdir_in};
-
         use super::*;
 
         #[test]
