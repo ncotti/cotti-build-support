@@ -1,16 +1,20 @@
+//! # Install
+//!
+//! Functions mainly used for installing packages.
+
+use bzip2::read::BzDecoder;
+use flate2::read::GzDecoder;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
-use flate2::read::GzDecoder;
-use bzip2::read::BzDecoder;
-use xz2::read::XzDecoder;
 use tar::Archive;
+use xz2::read::XzDecoder;
 use zstd;
 
 use crate::common;
 
-/// Mimics the "install <src> <dst>" command from GNU. Copies all files from
+/// Mimics the "install \<src\> \<dst\>" command from GNU. Copies all files from
 /// "src_dir" to "dst_dir", but preserves the "src_dir" folder structure
 ///
 /// src_dir follows these conditions:
@@ -67,7 +71,10 @@ pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Resu
 /// * `.tar.lzma`
 /// * `.tar.gz | .tgz`
 /// * `.tar.zst | .tzst`
-pub fn untar(tar: impl AsRef<Path>, output_dir: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn untar(
+    tar: impl AsRef<Path>,
+    output_dir: impl AsRef<Path>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let tar = tar.as_ref();
     let file = fs::File::open(tar)?;
 
@@ -75,42 +82,43 @@ pub fn untar(tar: impl AsRef<Path>, output_dir: impl AsRef<Path>) -> Result<(), 
         Some("tar") => {
             let mut archive = Archive::new(file);
             archive.unpack(output_dir)?;
-        },
+        }
         Some("bz2") | Some("tbz2") | Some("tbz") => {
             let decoder = BzDecoder::new(file);
             let mut archive = Archive::new(decoder);
             archive.unpack(output_dir)?;
-        },
+        }
         Some("xz") | Some("txz") => {
             let decoder = XzDecoder::new(file);
             let mut archive = Archive::new(decoder);
             archive.unpack(output_dir)?;
-        },
+        }
         Some("lzma") => {
             let decoder = XzDecoder::new(file);
             let mut archive = Archive::new(decoder);
             archive.unpack(output_dir)?;
-        },
+        }
         Some("gz") | Some("tgz") => {
             let decoder = GzDecoder::new(file);
             let mut archive = Archive::new(decoder);
             archive.unpack(output_dir)?;
-        },
+        }
         Some("zst") | Some("tzst") => {
             let decoder = zstd::Decoder::new(file)?;
             let mut archive = Archive::new(decoder);
             archive.unpack(output_dir)?;
-        },
+        }
         Some("zip") => {
             let mut zip = zip::ZipArchive::new(file)?;
             zip.extract(output_dir)?;
-        },
-        Some(_) | None=> {
+        }
+        Some(_) | None => {
             let e = std::io::Error::new(
-            ErrorKind::InvalidFilename,
-            format!("Unknown tar extension: {:?}", tar));
+                ErrorKind::InvalidFilename,
+                format!("Unknown tar extension: {:?}", tar),
+            );
             return Err(Box::new(e));
-        },
+        }
     };
 
     Ok(())
@@ -135,8 +143,14 @@ mod tests {
 
             let tar = out_dir_parent.join(tar_file);
             untar(tar, &out_dir).expect("Ok");
-            assert!(fs::read(out_dir_parent.join("file1.txt")).unwrap() == fs::read(out_dir.path().join("file1.txt")).unwrap());
-            assert!(fs::read(out_dir_parent.join("file2.txt")).unwrap() == fs::read(out_dir.path().join("file2.txt")).unwrap());
+            assert!(
+                fs::read(out_dir_parent.join("file1.txt")).unwrap()
+                    == fs::read(out_dir.path().join("file1.txt")).unwrap()
+            );
+            assert!(
+                fs::read(out_dir_parent.join("file2.txt")).unwrap()
+                    == fs::read(out_dir.path().join("file2.txt")).unwrap()
+            );
         }
 
         #[test]
@@ -158,7 +172,6 @@ mod tests {
         fn untar_lzma() {
             test_untar_generic("files.tar.lzma");
         }
-
 
         #[test]
         fn untar_xz() {

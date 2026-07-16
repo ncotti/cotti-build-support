@@ -1,40 +1,12 @@
 #![warn(missing_docs)]
 
-//! TODO crate documentation
-//! 
-
-use flate2::read::GzDecoder;
-use std::fs;
-use std::io::ErrorKind;
-use std::path::{Path, PathBuf};
-use tar::Archive;
+//! # Cotti build support
+//!
+//! This crate holds several functions focused on filesystem and OS management,
+//! useful for installing and building dependencies.
 
 pub mod common;
 pub mod install;
 
-
-pub fn install_ftd2xx(
-    tar: &str,
-    lib_install_dir: &str,
-    header_install_dir: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    fs::copy(
-        "/home/nicolas.cotti/cotti/rust/cotti-build-support/tmp/linux-x86_64/libftd2xx.so",
-        PathBuf::from(lib_install_dir).join("libftd2xx.so"),
-    )?;
-    fs::copy(
-        "/home/nicolas.cotti/cotti/rust/cotti-build-support/tmp/linux-x86_64/libftd2xx.a",
-        PathBuf::from(lib_install_dir).join("libftd2xx.a"),
-    )?;
-    fs::copy(
-        "/home/nicolas.cotti/cotti/rust/cotti-build-support/tmp/linux-x86_64/ftd2xx.h",
-        PathBuf::from(header_install_dir).join("ftd2xx.h"),
-    )?;
-    fs::copy(
-        "/home/nicolas.cotti/cotti/rust/cotti-build-support/tmp/linux-x86_64/WinTypes.h",
-        PathBuf::from(header_install_dir).join("WinTypes.h"),
-    )?;
-
-    fs::remove_dir_all("tmp")?;
-    Ok(())
-}
+pub use common::{find, find_dirs, find_files, rm_rf};
+pub use install::{install, untar};
