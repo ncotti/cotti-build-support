@@ -1,6 +1,6 @@
 name: "Markdown linter"
 description: <
-  Calls the markdown linter for the README
+  Calls the markdown linter
 
 on: push
 
