@@ -1,7 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026  Nicolas Gabriel Cotti
+
 name: "Markdown linter"
 description: <
-  Calls the markdown linter
-
+  Markdown linter with "markdownlint-cli2" and broken links checker with "lychee"
 on: push
 
 jobs:
@@ -9,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO_PATH: .
+      CONFIG_FILE: ""
     steps:
       - name: "Checkout project repo"
         uses: actions/checkout@v5
@@ -19,3 +22,4 @@ jobs:
         uses: ncotti/cotti-ci/actions/markdown_linter@main
         with:
           target_dir: ${{ env.REPO_PATH }}
+          config_file: ${{ env.CONFIG_FILE }}

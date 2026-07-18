@@ -4,7 +4,6 @@ description = "Filesystem and OS management for installing and building dependen
 keywords = ["Filesystem", "untar", "install"]
 
 license = "MIT"
-license_file = "LICENSE"
 authors = ["Nicolas Gabriel Cotti"]
 
 version = "0.1.0"
