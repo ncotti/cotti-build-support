@@ -1,7 +1,10 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026  Nicolas Gabriel Cotti
+
 name: "License checker"
 description: <
-  Checks that all rust source files have the MIT license and copyright notice
-
+  Checks that all relevant files in the repository have a valid
+  SPDX-License-Identifier and a copyright notice.
 on: push
 
 jobs:
@@ -10,7 +13,7 @@ jobs:
     env:
       REPO_PATH: .
       LICENSE: "MIT"
-      COPYRIGHT: "Copyright (c) 2026 Nicolas Gabriel Cotti"
+      COPYRIGHT: "Copyright (c) 2026  Nicolas Gabriel Cotti"
       EXTENSIONS: ".rs"
     steps:
       - name: "Checkout project repo"
