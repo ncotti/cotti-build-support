@@ -13,7 +13,7 @@ jobs:
     env:
       REPO_PATH: .
       LICENSE: "MIT"
-      COPYRIGHT: "Copyright (c) 2026  Nicolas Gabriel Cotti"
+      COPYRIGHT: "Copyright (c) 2026 Nicolas Gabriel Cotti"
       EXTENSIONS: ".rs"
     steps:
       - name: "Checkout project repo"
