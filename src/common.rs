@@ -45,10 +45,19 @@ pub fn rm_rf(path: impl AsRef<Path>) -> io::Result<()> {
 
 /// Mimics the "find -wholename \<pattern\>" command from GNU.
 /// Returns the list of files and folders that match the given "pattern".
+/// If "pattern" is a directory, then it will search for all files in it.
 ///
 /// It supports glob expansion. If no file is found, an empty vector is returned.
 pub fn find(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
-    let pattern = pattern.as_ref().to_string_lossy();
+    let pattern = pattern.as_ref();
+
+    let pattern = if pattern.is_dir() {
+        pattern.join("*")
+    } else {
+        pattern.to_path_buf()
+    };
+
+    let pattern = pattern.to_string_lossy();
 
     glob::glob(&pattern)
         .into_iter()
@@ -59,6 +68,7 @@ pub fn find(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
 
 /// Mimics the "find -type f -wholename \<pattern\>" command from GNU.
 /// Returns the list of files, not folders, that match the given "pattern".
+/// If "pattern" is a directory, then it will search for all files in it.
 ///
 /// It supports glob expansion. If no file is found, an empty vector is returned.
 pub fn find_files(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
@@ -68,7 +78,8 @@ pub fn find_files(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 /// Mimics the "find -type d -wholename \<pattern\>" command from GNU.
-/// Returns the list of folders, not files, that match the given "pattern",
+/// Returns the list of folders, not files, that match the given "pattern".
+/// If "pattern" is a directory, then it will search for all folders in it.
 ///
 /// It supports glob expansion. If no file is found, an empty vector is returned.
 pub fn find_dirs(pattern: impl AsRef<Path>) -> Vec<PathBuf> {
@@ -191,7 +202,7 @@ mod tests {
             }
 
             // Glob for all files in folder
-            let found_files = find(parent_path.join("*"));
+            let found_files = find(parent_path);
             assert!(files.len() == found_files.len());
             for (exp, actual) in zip(&files_sorted, found_files) {
                 assert!(*exp == actual);
@@ -217,15 +228,6 @@ mod tests {
         }
 
         #[test]
-        fn find_folders() {
-            let dir = tempdir().unwrap();
-
-            let dirs = find(&dir);
-            assert!(dirs.len() == 1);
-            assert!(dirs[0] == dir.path());
-        }
-
-        #[test]
         fn find_files_and_folders_mixed() {
             let parent_dir = tempdir().unwrap();
             let _dirs = [
@@ -240,16 +242,16 @@ mod tests {
             ];
 
             // Should find all files and folders
-            let found_files = find(parent_dir.path().join("*"));
+            let found_files = find(parent_dir.path());
             println!("{:?}", found_files);
             assert!(found_files.len() == 5);
 
             // Should only find files
-            let found_files = find_files(parent_dir.path().join("*"));
+            let found_files = find_files(parent_dir.path());
             assert!(found_files.len() == 3);
 
             // Should only find folders
-            let found_files = find_dirs(parent_dir.path().join("*"));
+            let found_files = find_dirs(parent_dir.path());
             assert!(found_files.len() == 2);
         }
 
@@ -269,7 +271,6 @@ mod tests {
 
             // 3 text files, plus 2 folders
             let found_files = find(parent_dir1.path().join("**/*"));
-            println!("{:?}", found_files);
             assert!(found_files.len() == 5);
         }
     }
