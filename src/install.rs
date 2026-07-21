@@ -29,7 +29,7 @@ use crate::common;
 ///
 /// dst_dir follows these conditions:
 /// * If it doesn't exists, the path will be created.
-/// * If it already exists, erases all its previous contents.
+/// * If it already exists, contents will be replaced, but not deleted.
 pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Result<()> {
     let src_dir = src_dir.as_ref();
     let dst_dir = dst_dir.as_ref();
@@ -52,7 +52,6 @@ pub fn install(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> io::Resu
         return Err(e);
     }
 
-    common::rm_rf(dst_dir)?;
     fs::create_dir_all(dst_dir)?;
 
     for file in src_files {
@@ -269,6 +268,21 @@ mod tests {
             install(src_dir.path().join("**/*.txt"), &dst_dir).expect("Ok");
             assert!(common::find(dst_dir.path().join("**/*.json")).is_empty());
             assert!(common::find(dst_dir.path().join("**/*.txt")).len() == src_files_txt.len());
+        }
+
+        #[test]
+        fn copy_with_dst_and_src_in_the_same_path() {
+            let src_dir = tempdir().unwrap();
+            let sub_src_dir = tempdir_in(&src_dir).unwrap();
+            let file_src = sub_src_dir.path().join("file.txt");
+            let file_dst = src_dir.path().join("file.txt");
+            fs::File::create(&file_src).expect("Ok");
+
+            // Try to copy file from /a/b/c/file.txt to /a/b/file.txt
+            assert!(file_src.exists());
+            assert!(!file_dst.exists());
+            install(&sub_src_dir, &src_dir).expect("ok");
+            assert!(file_dst.exists());
         }
     }
 }
